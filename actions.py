@@ -131,6 +131,14 @@ Write these three parts in Markdown:
     return ask_llm(prompt)
 
 
+NO_INVENTED_FACTS = (
+    "- If the comment asks for a specific fact you don't have evidence for — a price, an "
+    "exact address or location, availability, or a date — do not state one. Reply warmly "
+    "without confirming it: thank them, or say something like \"details are in the caption!\" "
+    "or \"will share more soon!\" — never invent a number or place."
+)
+
+
 def reply_to_comment(comment, bank=None, trace=None):
     """Comment Reply Agent: draft a reply to one audience comment in the creator's own
     voice. Gets more personal the more saved reply examples exist (see save_reply_example) —
@@ -139,6 +147,7 @@ def reply_to_comment(comment, bank=None, trace=None):
     voice = brand_voice(bank, trace)
     examples = _recall_texts("an example of how this creator replied to a fan comment, in their own words", 6, bank, trace)
     examples = [e for e in examples if "replied:" in e]
+    examples = _merge_reply_examples(examples, bank)
     tone_ref = _recall_texts("top audience comments on posts and their theme", 6, bank, trace)
     prompt = f"""You are drafting an Instagram reply for this creator, in their own voice — short, warm, sounds like a real person typing back, not a brand.
 
@@ -151,6 +160,7 @@ OTHER COMMENTS SEEN ON THIS ACCOUNT (tone reference only):
 {_bullets(tone_ref[:4])}
 
 {RULES}
+{NO_INVENTED_FACTS}
 
 The fan's comment: "{comment}"
 
@@ -189,6 +199,7 @@ def reply_batch(comments_text, bank=None, trace=None):
     voice = brand_voice(bank, trace)
     examples = _recall_texts("an example of how this creator replied to a fan comment, in their own words", 6, bank, trace)
     examples = [e for e in examples if "replied:" in e]
+    examples = _merge_reply_examples(examples, bank)
     tone_ref = _recall_texts("top audience comments on posts and their theme", 4, bank, trace)
     comments_block = "\n".join(f"{i + 1}. {c}" for i, c in enumerate(comments))
 
@@ -203,6 +214,7 @@ OTHER COMMENTS SEEN ON THIS ACCOUNT (tone reference only):
 {_bullets(tone_ref)}
 
 {RULES}
+{NO_INVENTED_FACTS}
 
 Here are {len(comments)} fan comments from the same post, in order:
 {comments_block}
@@ -219,12 +231,46 @@ Return ONLY a JSON array of exactly {len(comments)} strings, one reply per comme
     return [{"comment": c, "reply": r} for c, r in zip(comments, replies)]
 
 
+_REPLIES_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "reply_examples_store.json")
+
+
+def _load_reply_examples():
+    if os.path.exists(_REPLIES_PATH):
+        try:
+            with open(_REPLIES_PATH, encoding="utf-8") as f:
+                return json.load(f)
+        except (json.JSONDecodeError, OSError):
+            return {}
+    return {}
+
+
+def _save_reply_local(bank, fact):
+    store = _load_reply_examples()
+    key = bank or "default"
+    store.setdefault(key, []).append(fact)
+    store[key] = store[key][-20:]  # keep it small
+    with open(_REPLIES_PATH, "w", encoding="utf-8") as f:
+        json.dump(store, f, indent=2)
+
+
+def _merge_reply_examples(recalled, bank=None):
+    """Same reasoning as _past_outcomes: Hindsight recall can lag a few seconds behind a
+    just-retained memory, so a reply example saved seconds ago might not show up in recall
+    yet. Read the last few saved examples from a small instant local cache and merge them
+    in, so a demo (save an example, then immediately draft the next batch) always reflects
+    the save right away."""
+    local = _load_reply_examples().get(bank or "default", [])[-4:]
+    merged = list(dict.fromkeys(local + recalled))  # local first, de-duped
+    return merged[:6]
+
+
 def save_reply_example(comment, reply, bank=None, trace=None):
     """The creator approves/edits a drafted reply and saves it as 'this is how I'd say it' —
     retained as a memory so the NEXT reply this agent drafts is grounded in a real example,
     not just a generic voice profile. This is what makes replies visibly get more personal."""
     fact = f"When a fan commented \"{comment}\", the creator replied: \"{reply}\". This is a saved example of the creator's own reply style."
     retain_post(fact, bank_id=bank)
+    _save_reply_local(bank, fact)
     if trace is not None:
         trace.append({"op": "retain", "query": "reply example", "found": 1, "used": [fact]})
     return fact
