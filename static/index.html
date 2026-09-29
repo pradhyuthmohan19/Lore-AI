@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lore AI</title>
+<!-- Google's own "Google Sans" is not a public Google Font — it's proprietary to Google's apps.
+     Plus Jakarta Sans is the closest publicly-available match to its clean, rounded look. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f5f5f7;--card:#fff;--ink:#1d1d1f;--mute:#6e6e73;--line:#e8e8ed;--blue:#0a84ff;--green:#30d158;--pink:#ff375f;--purple:#bf5af2;
+--font:"Plus Jakarta Sans","Inter",-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Helvetica,Arial,sans-serif}
+:root{color-scheme:dark;--bg:#09090c;--card:#121217;--ink:#e7e7ea;--mute:#8b8b95;--line:#24242c;--blue:#4f9dff;--green:#3ddc84;--pink:#f472b6;--purple:#a78bfa}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);-webkit-font-smoothing:antialiased}
+main{max-width:920px;margin:0 auto;padding:48px 20px 90px}
+h1{font-size:clamp(40px,7vw,64px);font-weight:700;letter-spacing:-.035em;margin:0 0 6px;background:linear-gradient(90deg,var(--blue),var(--purple),var(--pink));-webkit-background-clip:text;background-clip:text;color:transparent}
+.sub{font-size:clamp(17px,3vw,22px);color:var(--mute);margin:0 0 28px}
+.seg{display:inline-flex;background:var(--line);border-radius:99px;padding:3px;gap:2px;flex-wrap:wrap;margin:0 0 14px}
+.seg button{border:0;background:transparent;color:var(--ink);font:500 14px var(--font);padding:8px 16px;border-radius:99px;cursor:pointer}
+.seg button.on{background:var(--card);box-shadow:0 1px 4px rgba(0,0,0,.15);font-weight:600}
+button:focus-visible,input:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+.card{background:var(--card);border-radius:28px;padding:24px;margin-bottom:14px}
+.row{display:flex;gap:10px}
+input[type=text]{flex:1;min-width:0;border:0;background:var(--bg);border-radius:99px;padding:14px 20px;font:16px var(--font);color:var(--ink)}
+.go{border:0;background:var(--blue);color:#fff;border-radius:99px;padding:13px 22px;font:600 15px var(--font);cursor:pointer}
+.go:disabled{opacity:.5}.go:active{transform:scale(.95)}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.chip{border:0;background:var(--bg);color:var(--ink);border-radius:99px;padding:8px 14px;font:14px var(--font);cursor:pointer}
+label.t{display:inline-flex;align-items:center;gap:6px;font-size:14px;color:var(--mute);margin-top:14px;margin-right:14px}
+.two{display:grid;gap:14px}
+@media(max-width:800px){.two{grid-template-columns:1fr!important}}
+.ans{border-radius:24px;padding:24px 26px;background:var(--card);line-height:1.65;font-size:16.5px;margin-bottom:14px;min-width:0;letter-spacing:-.005em}
+.ans.mem{box-shadow:0 0 0 2px var(--blue),0 12px 40px -12px rgba(10,132,255,.45)}
+.ans.err{box-shadow:0 0 0 2px var(--pink)}
+.ans p{margin:0 0 12px}.ans p:last-child{margin-bottom:0}
+.ans strong{font-weight:650}
+.ans h3,.ans h4{font-size:18px;font-weight:650;letter-spacing:-.02em;margin:22px 0 8px}
+.ans ul,.ans ol{margin:0 0 12px;padding-left:22px}.ans li{margin:5px 0}.ans li::marker{color:var(--blue)}
+.ans blockquote{margin:14px 0;padding:14px 18px;border-radius:18px;background:var(--bg);border-left:4px solid var(--blue);font-size:17px;line-height:1.55}
+.ans blockquote p{margin:0}
+.ans pre{margin:14px 0;padding:14px 18px;border-radius:18px;background:var(--bg);border-left:4px solid var(--blue);font:inherit;font-size:17px;white-space:pre-wrap}
+.ans code{background:var(--bg);border-radius:8px;padding:2px 7px;font-size:.92em}
+.tw{overflow-x:auto;margin:14px 0;border-radius:16px;border:1px solid var(--line)}
+.ans table{border-collapse:collapse;width:100%;font-size:15px}
+.ans th{text-align:left;font-weight:600;color:var(--mute);background:var(--bg);padding:10px 14px;white-space:nowrap}
+.ans td{padding:11px 14px;border-top:1px solid var(--line);vertical-align:top}
+.ans td:first-child{font-weight:500}
+.tag{display:inline-block;font-size:13px;font-weight:600;padding:4px 10px;border-radius:99px;margin-bottom:12px;background:var(--line);color:var(--mute)}
+.mem .tag{background:var(--blue);color:#fff}
+.cp{float:right;border:0;background:var(--bg);color:var(--mute);border-radius:99px;padding:5px 12px;font:500 13px var(--font);cursor:pointer}
+.two{grid-template-columns:1fr 1.7fr}
+.dots::after{content:"";animation:d 1.2s steps(4) infinite}@keyframes d{0%{content:""}25%{content:"."}50%{content:".."}75%{content:"..."}}
+.hs h2{font-size:22px;font-weight:700;letter-spacing:-.025em;margin:26px 0 4px}
+.flow{display:flex;gap:8px;flex-wrap:wrap;align-items:stretch;margin:14px 0}
+.st{flex:1 1 120px;background:var(--card);border-radius:20px;padding:16px;opacity:0;transform:translateY(8px);animation:in .5s forwards}
+.st .n{font-size:28px;font-weight:700;letter-spacing:-.03em}
+.st b{display:block;font-size:14px;margin-top:2px}
+.st.k{box-shadow:inset 0 0 0 2px var(--blue)}
+@keyframes in{to{opacity:1;transform:none}}
+.mm{background:var(--card);border-radius:20px;padding:6px 18px;margin-bottom:10px}
+.mm summary{padding:12px 0;font-size:15px}
+.m{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--line);font-size:14.5px;line-height:1.5;color:var(--ink)}
+.m b{font-weight:650;color:var(--blue)}
+.u{flex:none;font-size:12px;font-weight:600;padding:3px 9px;border-radius:99px;background:var(--green);color:#fff;margin-top:1px}
+.u.o{background:var(--line);color:var(--mute)}
+@media(prefers-reduced-motion:reduce){.st{animation:none;opacity:1;transform:none}.dots::after{animation:none}}
+.mute{color:var(--mute);font-size:14px}
+details{margin-top:12px;font-size:14px;color:var(--mute);white-space:normal}
+summary{cursor:pointer;font-weight:600;color:var(--ink)}
+.week{display:grid;grid-template-columns:repeat(7,1fr);gap:8px}
+.day{border:0;background:var(--bg);border-radius:16px;padding:10px 0;font:inherit;color:var(--ink);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px}
+.day small{color:var(--mute);font-size:12px}.day span{font-weight:600;font-size:16px}
+.day.top{box-shadow:inset 0 0 0 2px var(--green)}
+.day.on{background:var(--blue);color:#fff}.day.on small{color:#ffffffcc}
+.big{font-size:clamp(28px,5vw,40px);font-weight:700;letter-spacing:-.03em;margin:6px 0 10px}
+.hrs{display:flex;gap:10px;flex-wrap:wrap}
+.hr{background:var(--bg);border-radius:18px;padding:12px 16px}
+.hr b{display:block;font-size:20px;letter-spacing:-.02em}
+.item{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 0;border-top:1px solid var(--line)}
+.item:first-child{border-top:0}
+.sw{width:51px;height:31px;border-radius:99px;background:var(--line);border:0;position:relative;cursor:pointer;transition:background .25s;flex:none}
+.sw::after{content:"";position:absolute;top:2px;left:2px;width:27px;height:27px;border-radius:50%;background:#fff;box-shadow:0 2px 4px rgba(0,0,0,.25);transition:transform .25s}
+.sw[aria-checked=true]{background:var(--green)}.sw[aria-checked=true]::after{transform:translateX(20px)}
+[hidden]{display:none!important}
+
+.ev{background:rgba(48,209,88,.22);color:inherit;border-radius:6px;padding:0 3px;cursor:pointer}
+.ev sup{font-size:.62em;font-weight:700;color:#1a8f3a;margin-left:2px}
+.m.flash{background:rgba(10,132,255,.14);border-radius:10px}
+.chk{display:inline-block;background:var(--card);border-radius:99px;padding:8px 16px;font-size:14px;font-weight:600;margin:10px 0}
+.dg{overflow-x:auto}.dg svg{min-width:720px;width:100%;height:auto;display:block}
+.t1{font:600 13px var(--font);fill:var(--ink);text-anchor:middle}.t2{font:12px var(--font);fill:var(--mute);text-anchor:middle}
+.gl{font:600 12px var(--font);fill:var(--mute)}
+g.b rect{fill:var(--bg);stroke:var(--line);stroke-width:1.5}
+g.b.on rect{fill:var(--card);stroke:var(--blue);stroke-width:2.2}
+g.b.on .t1{fill:var(--blue)}
+rect.grp{fill:none;stroke:var(--line);stroke-dasharray:4 4}
+path.a{fill:none;stroke:var(--line);stroke-width:2}
+path.a.on{stroke:var(--blue);stroke-dasharray:6 6;animation:dash .9s linear infinite}
+@keyframes dash{to{stroke-dashoffset:-12}}
+.lg{display:flex;gap:12px;align-items:center;padding:10px 0;border-top:1px solid var(--line);font-size:14.5px}
+.lg:first-of-type{border-top:0}
+.lg i{flex:none;width:24px;height:24px;border-radius:50%;background:var(--blue);color:#fff;font:600 12px var(--font);display:grid;place-items:center}
+.lg code{background:var(--bg);border-radius:8px;padding:2px 7px;font-size:.93em}
+.bk{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media(max-width:700px){.bk{grid-template-columns:1fr}}
+.kp{background:var(--card);border-radius:24px;padding:20px}.kp .n{font-size:34px;font-weight:700;letter-spacing:-.035em}
+.br{display:grid;grid-template-columns:96px 1fr 52px 40px;gap:10px;align-items:center;font-size:14.5px;margin:10px 0}
+.bt{height:10px;border-radius:99px;background:var(--bg);overflow:hidden}.bt i{display:block;height:100%;width:0;border-radius:99px;transition:width 1.8s cubic-bezier(.22,.8,.2,1)}
+.bt.big{height:16px}.pc{font-variant-numeric:tabular-nums}
+.gd{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+@media(max-width:700px){.gd{grid-template-columns:1fr}}
+.gd .kp b{display:block;font-size:17px;margin-bottom:2px}.gd .kp .v{color:var(--blue);font-weight:650;font-size:15px;margin-bottom:6px}
+
+.sy{display:grid;grid-template-columns:1fr;gap:34px;margin:14px 0;max-width:820px}
+@media(max-width:860px){.sy{grid-template-columns:1fr}}
+.sc{position:relative;background:var(--card);border-radius:24px;padding:18px;opacity:0;animation:in .5s forwards;min-width:0}
+.sc+.sc::before{content:"↓";position:absolute;left:50%;top:-30px;color:var(--blue);font-size:20px}
+@media(max-width:860px){.sc+.sc::before{display:none}}
+.sc>b{display:block;font-size:15px;margin-bottom:8px}
+.q{font-size:20px;font-weight:650;letter-spacing:-.02em;line-height:1.3;margin-bottom:10px}
+.rk{margin-top:12px;font-size:13.5px;line-height:1.45}
+.rk div{display:flex;gap:8px;padding:8px 0;border-top:1px solid var(--line)}
+.rk i{flex:none;width:20px;height:20px;border-radius:50%;background:var(--blue);color:#fff;font:600 11px var(--font);display:grid;place-items:center;font-style:normal}
+.rw{background:var(--bg);border-radius:16px;padding:12px 14px;margin-bottom:8px;opacity:0;animation:in .5s forwards;font-size:14px;line-height:1.45}
+.rw h4{margin:0 0 4px;font-size:14px;color:var(--blue);display:flex;justify-content:space-between;gap:8px}
+.rw h4 span{font-weight:500;color:var(--mute);font-size:12.5px}
+.rw.sk{opacity:.55!important}.rw.sk h4{color:var(--mute)}
+.ch{display:inline-block;background:var(--card);border-radius:99px;padding:3px 10px;font-size:13px;margin:4px 6px 0 0}
+.ch b{color:var(--blue)}
+.sn{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--blue);color:#fff;font:600 12px var(--font);font-style:normal;margin-right:8px}
+.wds{display:flex;flex-wrap:wrap;gap:8px}
+.wd{display:inline-flex;flex-direction:column;background:var(--bg);border-radius:14px;padding:6px 12px;opacity:0;animation:in .5s forwards;border-bottom:3px solid var(--line)}
+.wd b{font-size:15px}.wd i{font-style:normal;font-size:11.5px;color:var(--mute)}
+.wd.k{border-color:#0a66d6}.wd.g{border-color:#1a8f4a}.wd.t{border-color:#c26a00}.wd.z{border-color:#6b4fd6}
+.r4{display:grid;grid-template-columns:1fr 1fr;gap:8px}@media(max-width:700px){.r4{grid-template-columns:1fr}}
+.r4 .rw{margin:0}
+.rn{display:inline-grid;place-items:center;width:18px;height:18px;border-radius:50%;background:var(--blue);color:#fff;font:600 10.5px var(--font);font-style:normal;margin-right:6px}
+.key{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px;margin-top:10px;font-size:13px;color:var(--mute)}.key b{display:block;color:var(--text,inherit);font-size:13px}
+.fw{opacity:0;animation:in .5s forwards;padding:4px 6px 4px 10px}
+.bd{font-style:normal;font-size:11px;font-weight:600;border-radius:99px;padding:1px 7px;margin-left:5px;background:var(--bg);color:var(--mute)}
+.bd.k{background:#e3f0ff;color:#0a66d6}.bd.g{background:#e6f7ec;color:#1a8f4a}.bd.t{background:#fff0dc;color:#c26a00}.bd.z{background:#f0eefc;color:#6b4fd6}
+mark.kw{background:rgba(255,159,10,.3);border-radius:4px;padding:0 2px;color:inherit}
+.tp{display:inline-block;font-size:11.5px;font-weight:600;padding:2px 8px;border-radius:99px;background:var(--line);color:var(--mute);margin-right:6px}
+.sf{font-size:13.5px;line-height:1.45;padding:8px 0;border-top:1px solid var(--line)}
+.sf:first-of-type{border-top:0}
+@media(prefers-reduced-motion:reduce){.sc,.rw,.wd{animation:none;opacity:1}}
+
+/* ---- dark, calm, light-weight look ---- */
+body{font-size:15px;font-weight:400;line-height:1.55}
+main{position:relative;z-index:1;padding-top:56px}
+.glow{position:fixed;inset:-20% -10% auto -10%;height:75vh;z-index:0;pointer-events:none;filter:blur(90px);opacity:0;animation:gin 2.4s ease forwards}
+.glow i{position:absolute;border-radius:50%;opacity:.5;animation:drift 22s ease-in-out infinite alternate}
+.glow i:nth-child(1){left:8%;top:6%;width:44vw;height:34vh;background:#3b6dff}
+.glow i:nth-child(2){left:38%;top:0;width:40vw;height:36vh;background:#8b5cf6;animation-duration:28s;animation-delay:-6s}
+.glow i:nth-child(3){left:62%;top:14%;width:34vw;height:28vh;background:#0ea5a4;opacity:.32;animation-duration:25s;animation-delay:-12s}
+@keyframes gin{to{opacity:.32}}
+@keyframes drift{to{transform:translate(6vw,4vh) scale(1.15)}}
+h1{font-size:clamp(30px,5vw,42px);font-weight:700;letter-spacing:-.01em;background:linear-gradient(90deg,#9ec5ff,#c4b5fd,#f9a8d4,#9ec5ff);background-size:250% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:hue 12s linear infinite;margin:0 0 8px}
+@keyframes hue{to{background-position:250% 0}}
+.sub{font-size:15px;font-weight:400;font-style:italic;color:var(--mute);margin:0 0 4px}
+.hi{font-size:15px;font-weight:400;font-style:italic;color:var(--mute);margin:0 0 24px}
+h2,.hs h2{font-size:16px!important;font-weight:500!important;letter-spacing:0!important}
+.card,.ans,.sc,.kp,.rw,.wd,.sf,.st{border:1px solid var(--line)}
+.card,.ans,.sc,.kp{border-radius:14px}.rw,.wd{border-radius:10px}
+.card,.ans,.sc{background:var(--card)}.rw,.wd{background:#0d0d11}
+.seg{border-radius:10px;background:#0f0f14;border:1px solid var(--line)}
+.seg button{border-radius:8px;font-weight:400;font-size:13.5px;padding:7px 14px;color:var(--mute)}
+.seg button.on{background:#1b1b23;color:var(--ink);font-weight:500;box-shadow:none}
+input[type=text]{border-radius:10px;background:#0d0d11;border:1px solid var(--line);font-size:15px;padding:12px 16px}
+textarea{border-radius:10px;background:#0d0d11;border:1px solid var(--line);font:15px var(--font);padding:12px 16px;color:var(--ink)}
+textarea:focus{border-color:var(--blue);outline:0}
+input[type=text]:focus{border-color:var(--blue);outline:0}
+.go{border-radius:10px;font-weight:500;font-size:14px;padding:11px 20px;background:#1d4ed8}
+.chip{border-radius:8px;border:1px solid var(--line);background:#0d0d11;color:var(--mute);font-size:13px}
+.ans{font-size:15px;line-height:1.7}.ans strong{font-weight:600}
+.ans h3,.ans h4{font-size:15px;font-weight:500}
+.ans.mem{box-shadow:none;border-color:#2b4a86}
+.ans blockquote,.ans pre{border-radius:10px;font-size:15px;border-left-width:2px}
+.tag{font-weight:500;font-size:12px;border-radius:6px}.mem .tag{background:#16305f;color:#9ec5ff}
+.kp .n,.n{font-size:24px!important;font-weight:500!important}
+.q{font-size:16px;font-weight:500}
+.u{background:rgba(61,220,132,.16);color:var(--green);font-weight:500}
+.ev{background:rgba(61,220,132,.16);color:inherit;font-weight:600}.ev sup{color:var(--green);font-size:.6em;font-weight:700;margin-left:2px;vertical-align:super;opacity:.9}.ev.rep sup{display:none}
+.sn,.rn,.rk i,.lg i{background:#1d4ed8;font-weight:500}
+.tp{border-radius:6px;font-weight:500}
+.ch{border:1px solid var(--line);background:#0d0d11}
+.key b,.wd b{font-weight:500}
+
+/* ---- live "agent is working" wave ---- */
+.ld{display:flex;align-items:center;gap:16px;padding:18px 20px;border:1px solid var(--line);border-radius:14px;background:var(--card);position:relative;overflow:hidden}
+.ld::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;background:linear-gradient(90deg,transparent,#4f9dff,#a78bfa,#f472b6,#4f9dff,transparent);background-size:60% 100%;background-repeat:no-repeat;animation:sweep 1.8s ease-in-out infinite}
+@keyframes sweep{from{background-position:-60% 0}to{background-position:160% 0}}
+.wave{display:flex;align-items:center;gap:4px;height:34px}
+.wave i{display:block;width:4px;height:100%;border-radius:4px;background:linear-gradient(180deg,#4f9dff,#a78bfa,#f472b6);background-size:100% 300%;transform:scaleY(.25);animation:wv 1.15s ease-in-out infinite,wc 3s linear infinite}
+.wave i:nth-child(2){animation-delay:.1s,.2s}.wave i:nth-child(3){animation-delay:.2s,.4s}.wave i:nth-child(4){animation-delay:.3s,.6s}.wave i:nth-child(5){animation-delay:.4s,.8s}.wave i:nth-child(6){animation-delay:.5s,1s}.wave i:nth-child(7){animation-delay:.6s,1.2s}
+@keyframes wv{50%{transform:scaleY(1)}}@keyframes wc{to{background-position:0 300%}}
+.ls{font-size:14px;color:var(--ink)}.lh{font-size:12px;color:var(--mute);display:block;margin-top:2px}
+.go:disabled{background:linear-gradient(90deg,#1d4ed8,#6d28d9,#be185d,#1d4ed8);background-size:250% 100%;animation:hue 3s linear infinite;opacity:1}
+@media(prefers-reduced-motion:reduce){.glow,.glow i,h1,.wave i,.ld::after,.go:disabled{animation:none}.glow{opacity:.25}.wave i{transform:scaleY(.6)}}
+/* ---- clear hierarchy: headline > heading > body ---- */
+.ans{font-size:14.5px;line-height:1.65;color:#b4b4be}
+.ans strong{font-weight:600;color:#f4f4f6}
+.ans .tag+p{font-size:19px;line-height:1.4;font-weight:600;letter-spacing:-.015em;color:#f7f7f9;margin:4px 0 6px}
+.ans h3,.ans h4{font-size:17px;font-weight:650;letter-spacing:-.01em;color:#fff;margin:26px 0 10px;padding-left:10px;border-left:3px solid var(--blue)}
+.ans li{color:#b4b4be;margin:10px 0}
+/* Turn a "**Label:** rest of sentence" line into a small labeled section instead of one flat sentence */
+.ans li>strong:first-child,.ans p>strong:first-child{display:inline-block;color:var(--blue);background:rgba(79,157,255,.14);padding:2px 9px;border-radius:6px;margin-right:2px;font-size:12.5px;letter-spacing:.01em}
+.ans blockquote{color:#ececf0;font-size:15px}
+.ans .ev{text-decoration:underline dotted rgba(61,220,132,.7);text-underline-offset:3px}
+.hs h2{font-size:20px!important;font-weight:600!important;color:var(--ink);margin:36px 0 4px!important}
+.sc>b{font-size:16px;font-weight:600;color:var(--ink)}
+.sf,.rw,.m{color:#b4b4be}
+.ops{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:14px 0}
+@media(max-width:700px){.ops{grid-template-columns:1fr}}
+.op{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;opacity:.55}
+.op.on{opacity:1;border-color:#2b4a86;box-shadow:inset 0 0 0 1px rgba(43,74,134,.4)}
+.op .ok{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--line);color:var(--mute);font:600 11px var(--font);margin-right:8px}
+.op.on .ok{background:#1d4ed8;color:#fff}
+.op b{font-size:16px;font-weight:600;color:var(--ink)}
+.op .ov{font-size:20px;font-weight:600;letter-spacing:-.02em;color:var(--ink);margin:8px 0 2px}
+.op.on .ov{color:#9ec5ff}
+.mmx{border:1px solid #6d4fd6;background:linear-gradient(180deg,rgba(167,139,250,.16),rgba(167,139,250,.04));border-radius:12px;padding:14px 16px;margin:8px 0 14px}
+.mmk{display:inline-block;font-size:11.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#c4b5fd;margin-bottom:6px}
+.mmx>div:first-of-type{font-size:15px;line-height:1.5;color:var(--ink)}
+details.more{margin:4px 0 0}
+details.kdrop{margin-top:10px}details.kdrop summary{font-size:13px;color:var(--mute);font-weight:500}
+
+/* ---- account picker (multiple accounts under one creator) ---- */
+select.acct{margin:10px 0 0;display:block;background:#0d0d11;color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:8px 14px;font:14px var(--font);max-width:280px}
+
+/* ---- Monday Autopilot: plan as cards, distinct font from the rest of the UI ---- */
+.plan-head{font-size:18px;font-weight:600;letter-spacing:-.01em;margin:4px 0 14px;color:var(--ink)}
+.plan{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px}
+.pcard{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:9px;position:relative}
+.pday{font:600 12px var(--font);text-transform:uppercase;letter-spacing:.06em;color:var(--blue);display:flex;align-items:center;gap:8px}
+.pfmt{font-weight:500;color:var(--mute);text-transform:none;letter-spacing:0}
+.pbest{font-size:10px;font-weight:700;background:var(--green);color:#04170a;padding:2px 8px;border-radius:99px}
+.ptopic{font-family:Georgia,'Iowan Old Style','Palatino Linotype',Palatino,serif;font-size:19px;font-weight:600;line-height:1.3;color:var(--ink)}
+.psuggest{font-size:15px;font-weight:600;line-height:1.4;color:var(--ink);background:rgba(79,157,255,.1);border-left:3px solid var(--blue);border-radius:8px;padding:8px 12px}
+.pcap{font-size:14px;line-height:1.55;color:#c7c7cf;background:var(--bg);border-radius:10px;padding:10px 12px}
+.ptags{display:flex;flex-wrap:wrap;gap:6px}
+.ptag{font-size:12px;color:var(--blue);background:rgba(79,157,255,.14);border-radius:99px;padding:3px 9px}
+.pcard .cp{position:static;align-self:flex-start;float:none}
+.prow{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-top:2px}
+.mkrow{display:flex;gap:6px;flex-wrap:wrap}
+.mk{font:500 12px var(--font);border:1px solid var(--line);background:var(--bg);color:var(--mute);border-radius:99px;padding:5px 10px;cursor:pointer}
+.mk:hover{color:var(--ink);border-color:var(--mute)}
+.mk:disabled{opacity:.5;cursor:default}
+.mkdone{font-size:12px;color:var(--green)}
+.lrn{background:rgba(48,209,88,.08);border:1px solid rgba(48,209,88,.35);border-radius:14px;padding:14px 16px;margin-bottom:16px}
+.lrn-head{font-weight:600;font-size:13.5px;margin-bottom:6px}
+.lrn-row{font-size:13px;color:var(--ink);padding:3px 0}
+
+/* ---- memories read: its own visually distinct section, quieter and monospaced ---- */
+.mem-read{background:#0d0d11;border:1px solid var(--line);border-radius:16px;padding:18px 20px;margin-top:20px}
+.mem-read h2{margin-top:0!important}
+.mem-read .m,.mem-read .mm summary{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12.5px}
+
+/* ---- Memory bank: top numbers as a plain readout, visually separate from the cards below ---- */
+.bank-stats{display:flex;gap:28px;flex-wrap:wrap;padding:16px 4px;border-bottom:1px solid var(--line)}
+.bank-stats .bs{display:flex;flex-direction:column;gap:2px}
+.bank-stats .bs b{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:26px;font-weight:600;color:var(--ink)}
+.bank-stats .bs span{font-size:12px;color:var(--mute)}
+</style>
+</head>
+<body>
+<div class="glow" aria-hidden="true"><i></i><i></i><i></i></div>
+<main>
+  <h1>Lore AI</h1>
+  <p class="sub">The brain behind your next post.</p>
+  <p class="hi" id="hiLine"></p>
+  <div><div class="seg" id="creators"></div><select id="account" class="acct" hidden></select></div>
+  <div class="seg" id="tabs">
+    <button class="on" data-t="ask">Ask</button><button data-t="brief">Monday Autopilot</button><button data-t="reply">Replies</button><button data-t="bank">Memory bank</button><button data-t="cal">Best time</button>
+  </div>
+
+  <section id="p-ask">
+    <div class="card">
+      <div class="row"><input type="text" id="q" placeholder="Ask anything about this creator" aria-label="Question"><button class="go" id="go-ask">Ask</button></div>
+      <div class="chips" id="chips"></div>
+      <label class="t"><input type="checkbox" id="cmp" checked> Compare with no memory</label>
+      <label class="t"><input type="checkbox" id="deep"> Deep reasoning (slow, uses many tokens)</label>
+    </div>
+  </section>
+  <section id="p-brief" hidden>
+    <div class="card">
+      <b>Plan from your own notes</b>
+      <textarea id="notes" rows="4" placeholder="trying the handloom kurta in my wardrobe&#10;buying jeans at Inorbit Mall&#10;trying on the party outfit for Saturday" aria-label="Your notes" style="width:100%;margin-top:10px;resize:vertical"></textarea>
+      <button class="go" id="go-notes" style="margin-top:10px">Plan from my notes</button>
+    </div>
+  </section>
+  <section id="p-reply" hidden>
+    <div class="card">
+      <textarea id="comment" rows="5" placeholder="Paste the comments on a post, one per line —&#10;is this worth it over the last gen?&#10;waiting for the camera comparison&#10;what's the price in India?" aria-label="Fan comments" style="width:100%;resize:vertical"></textarea>
+      <button class="go" id="go-reply" style="margin-top:10px">Draft all replies</button>
+    </div>
+  </section>
+
+  <section id="p-cal" hidden>
+    <div class="card">
+      <div class="mute">Average engagement by weekday, from this creator's real posts (stories excluded)</div><br>
+      <div class="week" id="week"></div>
+      <div class="big" id="best"></div>
+      <div class="mute">Best hours (IST)</div><br>
+      <div class="hrs" id="hrs"></div>
+      <p class="mute" id="calnote"></p>
+    </div>
+  </section>
+
+
+  <section id="p-bank" hidden></section>
+  <div id="out"></div>
+  <div id="trace" class="hs"></div>
+</main>
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+const post=(u,b)=>fetch(u,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(b)}).then(async r=>{const t=await r.text();try{return JSON.parse(t)}catch(_){throw new Error(`Server returned ${r.status} ${r.statusText} for ${u} instead of JSON. Restart app.py and open http://127.0.0.1:5000`)}});
+/* Real numbers computed from data/*.csv: avg engagement % by weekday and top hours (posts only, no stories) */
+const DAYS=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+const BEST={
+ chaos:{d:[7.2,7.17,7.19,7.11,7.23,7.04,7.25],h:{23:7.32,11:7.2,17:7.19}},
+ "prasad-fashion":{d:[3.6,3.32,3.32,3.6,3.45,3.89,3.56],h:{1:7.46,11:7.33,21:7.23}},
+ "prasad-tech":{d:[4.98,4.76,4.67,5.31,5.3,4.93,4.91],h:{21:5.54,22:5.3,17:5.15}},
+ "prasad-food":{d:[5.75,5.47,5.03,5.36,5.22,5.39,5.05],h:{20:5.7,18:5.55,12:5.48}}};
+const hr=h=>((h+11)%12+1)+(h<12?" am":" pm");
+let persona="prasad-fashion",tab="ask",ACCOUNTS={};
+(function(){ // lightweight "who's using this" — not real login, just a remembered name for the greeting
+  try{
+    let name=localStorage.getItem("loreai_name");
+    if(!name){name=(prompt("What's your name?")||"").trim();if(name)localStorage.setItem("loreai_name",name)}
+  }catch(e){const el=$("#hiLine");if(el)el.remove()}
+})();
+// Type the question box's placeholder out on load, cycling through a few prompts, so it draws the eye.
+(function(){
+  const el=$("#q");if(!el||matchMedia("(prefers-reduced-motion:reduce)").matches)return;
+  const prompts=["Ask anything about this creator","What should I post next?","Which format works best?","What is my audience asking for?"];
+  let p=0,i=0,deleting=false;
+  function tick(){
+    if(document.activeElement===el||el.value){el.placeholder="Ask anything about this creator";return} // stop once the person's typing
+    const full=prompts[p];
+    i+=deleting?-1:1;
+    el.placeholder=full.slice(0,i);
+    let delay=deleting?25:55;
+    if(!deleting&&i===full.length){deleting=true;delay=1400}
+    else if(deleting&&i===0){deleting=false;p=(p+1)%prompts.length;delay=400}
+    setTimeout(tick,delay)}
+  tick();
+})();
+function switchTo(id){persona=id;$("#out").innerHTML="";$("#trace").innerHTML="";LAST={recall:false,mm:false,reflect:false};cal(0,true);if(tab==="bank"){renderBank();animBank()}}
+function renderAccountPicker(g){
+  const accs=ACCOUNTS[g]||[],el=$("#account");
+  if(accs.length<2){el.hidden=true;el.innerHTML="";return}
+  el.hidden=false;el.innerHTML=accs.map(a=>`<option value="${esc(a.id)}">${esc(a.name)}${a.niche?" · "+esc(a.niche):""}</option>`).join("");el.value=persona}
+$("#account").onchange=e=>switchTo(e.target.value);
+fetch("/api/personas").then(r=>r.json()).then(l=>{
+  ACCOUNTS={};l.forEach(p=>{(ACCOUNTS[p.group||p.name]=ACCOUNTS[p.group||p.name]||[]).push(p)});
+  const groups=Object.keys(ACCOUNTS);
+  const el=$("#creators");
+  if(groups.length<2){el.hidden=true;el.innerHTML=""}
+  else{el.hidden=false;el.innerHTML=groups.map((g,i)=>`<button data-g="${esc(g)}" title="${esc((ACCOUNTS[g][0]||{}).niche||"")}" class="${i?"":"on"}">${esc(g)}</button>`).join("")}
+  if(groups.length){persona=ACCOUNTS[groups[0]][0].id;renderAccountPicker(groups[0])}
+  document.querySelectorAll("#creators button").forEach(b=>b.onclick=()=>{const g=b.dataset.g;
+    document.querySelectorAll("#creators button").forEach(x=>x.classList.toggle("on",x===b));
+    renderAccountPicker(g);switchTo(ACCOUNTS[g][0].id)});
+  cal(0,true)});
+document.querySelectorAll("#tabs button").forEach(b=>b.onclick=()=>{tab=b.dataset.t;
+  document.querySelectorAll("#tabs button").forEach(x=>x.classList.toggle("on",x===b));
+  ["ask","brief","reply","bank","cal"].forEach(t=>$("#p-"+t).hidden=t!==tab);
+  if(tab==="bank"){renderBank();animBank()}
+  $("#out").hidden=(tab==="cal"||tab==="bank");$("#trace").hidden=(tab!=="ask");if(tab!=="ask")$("#trace").innerHTML=""});
+["What should I post next?","Which format works best?","What is my audience asking for?"].forEach(k=>{
+  const b=document.createElement("button");b.className="chip";b.textContent=k;b.onclick=()=>{$("#q").value=k;$("#go-ask").click()};$("#chips").appendChild(b)});
+function inl(s){return esc(s).replace(/&lt;br\s*\/?&gt;/gi,"<br>").replace(/`([^`]+)`/g,"<code>$1</code>").replace(/\*\*(.+?)\*\*/g,"<strong>$1</strong>").replace(/(^|[^*\w])\*(?!\s)([^*]+?)\*(?![*\w])/g,"$1<em>$2</em>")}
+function md(src){
+  const lines=[];
+  String(src).replace(/\r/g,"").split("\n").forEach(l=>{
+    if(/^\s*\|/.test(l))lines.push(l.replace(/```([\s\S]*?)```/g,(m,c)=>"`"+c.replace(/^(\s|\\n)+|(\s|\\n)+$/g,"").replace(/\\n/g,"<br>")+"`").replace(/\\n/g,"<br>"));
+    else lines.push(...l.replace(/\\n/g,"\n").split("\n"))});
+  const out=[],cells=r=>r.trim().replace(/^\||\|$/g,"").split("|").map(c=>c.trim());
+  const isB=l=>/^\s*(```|#{1,4}\s|>|\|)/.test(l)||/^\s*([-*•]|\d+\.)\s+/.test(l);
+  let i=0;
+  while(i<lines.length){
+    const l=lines[i];
+    if(!l.trim()){i++;continue}
+    if(/^\s*```/.test(l)){const buf=[];let first=l.replace(/^\s*```\w*/,"");if(first.includes("```")){out.push(`<pre>${esc(first.replace(/```.*/,"").trim())}</pre>`);i++;continue}
+      if(first.trim())buf.push(first);i++;while(i<lines.length&&!/```/.test(lines[i]))buf.push(lines[i++]);
+      if(i<lines.length){const t=lines[i].replace(/```.*/,"");if(t.trim())buf.push(t)}i++;out.push(`<pre>${esc(buf.join("\n").trim())}</pre>`);continue}
+    let m=l.match(/^\s*(#{1,4})\s+(.*)/);
+    if(m){out.push(`<h3>${inl(m[2])}</h3>`);i++;continue}
+    if(/^\s*\|/.test(l)&&i+1<lines.length&&/^\s*\|?[\s:|-]+\|[\s:|-]*$/.test(lines[i+1])){
+      const h=cells(l);i+=2;const rows=[];while(i<lines.length&&/^\s*\|/.test(lines[i]))rows.push(cells(lines[i++]));
+      out.push(`<div class="tw"><table><thead><tr>${h.map(c=>`<th>${inl(c)}</th>`).join("")}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map(c=>`<td>${inl(c)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`);continue}
+    if(/^\s*>/.test(l)){const q=[];while(i<lines.length&&/^\s*>/.test(lines[i]))q.push(inl(lines[i++].replace(/^\s*>\s?/,"")));out.push(`<blockquote><p>${q.join("<br>")}</p></blockquote>`);continue}
+    if(/^\s*([-*•]|\d+\.)\s+/.test(l)){const ord=/^\s*\d+\./.test(l),sn=(l.match(/^\s*(\d+)\./)||[])[1],it=[];
+      while(i<lines.length&&/^\s*([-*•]|\d+\.)\s+/.test(lines[i]))it.push(`<li>${inl(lines[i++].replace(/^\s*([-*•]|\d+\.)\s+/,""))}</li>`);
+      out.push(ord?`<ol start="${sn}">${it.join("")}</ol>`:`<ul>${it.join("")}</ul>`);continue}
+    const p=[];while(i<lines.length&&lines[i].trim()&&(p.length===0||!isB(lines[i])))p.push(inl(lines[i++]));
+    out.push(`<p>${p.join("<br>")}</p>`)}
+  return out.join("")}
+let RAW={},PLANS={};
+function box(cls,title,text,key){RAW[key||title]=text;return `<div class="ans ${cls}"><button class="cp" data-k="${esc(key||title)}">Copy</button><span class="tag">${title}</span>${cls==="err"?`<p>${esc(text)}</p>`:md(text)}</div>`}
+document.addEventListener("click",e=>{const b=e.target.closest(".cp");if(b){navigator.clipboard.writeText(RAW[b.dataset.k]||"");b.textContent="Copied";setTimeout(()=>b.textContent="Copy",1400)}});
+const NUM=/\d{4}-\d{2}-\d{2}|\d+(?:,\d{3})*(?:\.\d+)?(?:\s?%)?/g;
+function hl(s){return esc(s).replace(NUM,x=>x.replace(/\D/g,"").length>=3?`<b>${x}</b>`:x)}
+function usedIn(m,ans){const a=ans.replace(/\s/g,"");return (m.match(NUM)||[]).map(x=>x.replace(/\s/g,"")).filter(x=>x.replace(/\D/g,"").length>=3).some(x=>a.includes(x))}
+/* Numbers below are copied from the Hindsight dashboard for scratch-chaos-3 */
+const BS={chaos:{mem:202,doc:37,links:"5,299",w:[142,70],e:[0,0],o:[60,30],l:[["Temporal","2.5k",48,"#ff9f0a"],["Semantic","2.6k",49,"#30d158"],["Entity","166",3,"#ff375f"]],done:202,pend:0,fail:0,last:"1h ago when captured",mm:"1 / 1"}};
+let LAST={recall:false,mm:false,reflect:false};
+function markEv(root,mems){
+  let tot=0,hit=0;const seenM=new Set();const w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT),nodes=[];while(w.nextNode())nodes.push(w.currentNode);
+  const nd=x=>x.replace(/[\s,%]/g,"");
+  nodes.forEach(n=>{if(n.parentElement.closest(".cp,.tag,code,pre"))return;const t=n.nodeValue;NUM.lastIndex=0;if(!NUM.test(t))return;NUM.lastIndex=0;
+    const f=document.createDocumentFragment();let last=0,m;
+    while((m=NUM.exec(t))){const raw=m[0],d=raw.replace(/\D/g,"");if(d.length<3||/^20\d\d$/.test(raw.trim()))continue;tot++;
+      const k=nd(raw),i=mems.findIndex(x=>nd(x).includes(k));f.append(t.slice(last,m.index));
+      if(i>=0){hit++;const e=document.createElement("mark");e.className="ev"+(seenM.has(i)?" rep":"");e.dataset.m=i;e.title="Found in memory M"+(i+1)+" (click to see it)";e.append(raw);seenM.add(i);f.append(e)}else f.append(raw);
+      last=m.index+m[0].length}
+    f.append(t.slice(last));n.replaceWith(f)});
+  return [hit,tot]}
+
+const STOP=new Set("a an the of to in on for and or is are was were be do does did what which who how why when where my me i you your our we it its this that with about from at by as can should would could will not any all".split(" "));
+function terms(q){return [...new Set((String(q).toLowerCase().match(/[a-z0-9#][a-z0-9#']+/g)||[]).filter(w=>w.length>2&&!STOP.has(w)))].slice(0,6)}
+function hl2(s,T){return esc(s).replace(NUM,x=>x.replace(/\D/g,"").length>=3?`<b>${x}</b>`:x).split(/(<[^>]+>)/).map((p,i)=>i%2||!T.length?p:p.replace(new RegExp("("+T.map(w=>w.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")).join("|")+")","gi"),'<mark class="kw">$1</mark>')).join("")}
+let CUR="";
+function story(t,ans){
+  const rec=t.filter(s=>s.op==="recall");if(!rec.length)return"";
+  const r0=rec[0],q=r0.query,W=terms(q),meta0=r0.meta||[],all=rec.flatMap(s=>s.used);
+  const seen={},mem=[],meta=[],dup=[];r0.used.forEach((m,i)=>{const k=m.replace(/\s+/g," ").slice(0,140).toLowerCase();if(k in seen){dup[seen[k]]++;return}seen[k]=mem.length;mem.push(m);meta.push(meta0[i]||{});dup.push(1)});
+  const pl=(n,w)=>n+" "+w+(n===1?"":"s");
+  const has=(m,w)=>m.toLowerCase().includes(w),sn=(x,n)=>x.length>n?x.slice(0,n)+"…":x;
+  const kw=W.map(w=>[w,mem.filter(m=>has(m,w)).length]),noKwIdx=mem.map((m,i)=>W.some(w=>has(m,w))?-1:i).filter(i=>i>=0),noKw=noKwIdx.map(i=>mem[i]);
+  let ents={},src="from Hindsight's entity graph";
+  meta.forEach(x=>(x.entities||[]).forEach(e=>ents[e]=(ents[e]||0)+1));
+  if(!Object.keys(ents).length){src="names seen across the memories";
+    mem.forEach(m=>{(m.match(/\b(reels?|carousels?|stor(?:y|ies)|images?)\b/gi)||[]).forEach(x=>{const k=x.toLowerCase().replace(/^stor.*/,"story").replace(/s$/,"");ents[k]=(ents[k]||0)+1});
+      (m.match(/'([^']{4,40})'/g)||[]).forEach(x=>{const k=x.slice(1,-1);ents[k]=(ents[k]||0)+1})})}
+  const eList=Object.entries(ents).sort((a,b)=>b[1]-a[1]).slice(0,4);
+  const cue=q.match(/\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\b|\b20\d\d\b|\b(last|latest|recent(ly)?|since|yesterday|week|month|today|days?)\b/i);
+  const dates=[...mem.join(" ").matchAll(/\d{4}-\d{2}-\d{2}/g)].map(x=>x[0]).sort();
+  const sc=meta.map(x=>x&&x.score).filter(x=>typeof x==="number");
+  const typ=i=>(meta[i]&&meta[i].type)||"memory";
+  const nUsed=[...new Set(all)].filter(m=>usedIn(m,ans)).length;
+  const mmS=t.find(s=>s.op==="mental model"&&s.found);
+  const entKeys=Object.keys(ents).map(e=>e.toLowerCase()),cw=cue?cue[0].toLowerCase():"";
+  const IDEA=new Set("best worst works work good better top most least high low why get more need want tips idea ideas try".split(" "));
+  const flow=W.map((w,i)=>{const k=kw.find(x=>x[0]===w)[1],g=entKeys.some(e=>e.includes(w)||(e.length>3&&w.includes(e))),tm=cw&&(cw.includes(w)||w.includes(cw));
+    const role=tm?["t","time word","searched by time"]:k?["k","exact word","found in "+k+" of "+mem.length+" memories"]:g?["g","name","matched a linked name"]:IDEA.has(w)?["z","idea word","understood by meaning"]:["z","by meaning","no exact match, matched by meaning"];
+    return `<span class="wd ${role[0]}" title="${role[2]}" style="animation-delay:${.2+i*.12}s"><b>${esc(w)}</b><i>${role[1]}${k&&!tm?" · "+k+"/"+mem.length:""}</i></span>`}).join("");
+  const you=CUR&&CUR!==q?`<div class="mute" style="margin-bottom:8px">You asked “${esc(CUR)}”. The agent sent Hindsight this query:</div><div class="q" style="font-size:16px">“${esc(sn(q,110))}”</div>`:`<div class="q">“${esc(sn(q,110))}”</div>`;
+  return `<h2>What happened to your words</h2><div class="mute">Built from the memories Hindsight really returned for this question.</div>
+  <div class="sy">
+   <div class="sc" style="animation-delay:.1s"><b><em class="sn">1</em>Your words</b>${you}<div class="wds">${flow||"No searchable words."}</div><div class="mute" style="margin-top:8px">Small words are ignored. Each remaining word is searched by exact match, by name, by time and by meaning.</div></div>
+   <div class="sc" style="animation-delay:.5s"><b><em class="sn">2</em>Hindsight searches four ways at once</b><div class="r4">
+    <div class="rw" style="animation-delay:.8s"><h4>Meaning</h4>${noKw.length?`${noKwIdx.length>1?"Memories":"Memory"} ${noKwIdx.map(i=>"#"+(i+1)).join(", ")} ranked in the top ${mem.length} with none of your words, so ${noKwIdx.length>1?"they were":"it was"} matched by meaning.`:`Every top memory also shares a word with your query.`}</div>
+    <div class="rw" style="animation-delay:1.1s"><h4>Exact words</h4>${W.length?kw.filter(k=>k[1]).map(k=>`<span class="ch"><b>${esc(k[0])}</b> · ${k[1]} of ${mem.length}</span>`).join("")+(kw.some(k=>!k[1])?`<div class="ch">${pl(kw.filter(k=>!k[1]).length,"word")} had no exact match; meaning search covered them</div>`:""):"No searchable words in the query."}</div>
+    <div class="rw" style="animation-delay:1.4s"><h4>Names</h4>${eList.length?eList.map(e=>`<span class="ch"><b>${esc(sn(e[0],26))}</b> · ${pl(e[1],"memory").replace("memorys","memories")}</span>`).join(""):"No linked entities found."}</div>
+    <div class="rw${cue?"":" sk"}" style="animation-delay:1.7s"><h4>Time</h4>${cue?`Time cue in the query: <span class="ch"><b>${esc(cue[0])}</b></span>${dates.length?`<div class="ch">memories span ${dates[0]} to ${dates[dates.length-1]}</div>`:""}`:`No date words in your query, so this search was skipped.`}</div>
+   </div>
+   </div><div class="sc" style="animation-delay:2s"><b><em class="sn">3</em>The 3 best memories</b>
+    ${mmS?`<div class="mmx"><span class="mmk">Mental model · brand voice</span><div>${esc(sn((mmS.used[0]||"").replace(/[#*_>`]/g,"").replace(/\s+/g," ").trim(),200))}</div><div class="mute" style="margin-top:6px">A saved summary of how this creator sounds. Every answer reads it first.</div></div>`:""}
+    ${mem.slice(0,3).map((m,i)=>`<div class="sf"><i class="rn">${i+1}</i>${typ(i)!=="memory"?`<span class="tp">${esc(typ(i))}</span>`:""}${usedIn(m,ans)?'<span class="u" style="margin-right:6px">used in answer</span>':""}${dup[i]>1?`<span class="tp">${dup[i]} near-identical</span>`:""}<br>${hl2(sn(m,170),W)}</div>`).join("")}
+    <div class="sf">${nUsed} of ${[...new Set(all)].length} retrieved memories have figures that appear in the answer.</div>
+   </div></div>`}
+function hsOps(t){
+  const rec=t.filter(s=>s.op==="recall"),rf=t.filter(s=>s.op==="reflect"&&s.found),B=BS[persona];
+  const found=rec.reduce((a,s)=>a+s.found,0),used=rec.reduce((a,s)=>a+s.used.length,0);
+  const c=(k,on,name,big,sub)=>`<div class="op${on?" on":""}"><span class="ok">${k}</span><b>${name}</b><div class="ov">${big}</div><div class="mute">${sub}</div></div>`;
+  return `<div class="ops">${c("1",true,"Retain",B?B.doc+" documents":"Done",B?"became "+B.mem+" memories, saved earlier":"saved earlier")}${c("2",rec.length>0,"Recall",found+" found","top "+used+" read for this answer")}${c("3",rf.length>0,"Reflect",rf.length?"Used":"Off",rf.length?"deep reasoning ran":"switch on Deep reasoning to use it")}</div>`}
+function trace(t,ans){
+  if(!t||!t.length){$("#trace").innerHTML="";return}
+  const rec=t.filter(s=>s.op==="recall"),mm=t.filter(s=>s.op==="mental model"&&s.found),rf=t.filter(s=>s.op==="reflect"&&s.found);
+  LAST={recall:rec.length>0,mm:mm.length>0,reflect:rf.length>0};
+  const found=rec.reduce((a,s)=>a+s.found,0),used=rec.reduce((a,s)=>a+s.used.length,0);
+  const st=[["1","Your question","sent to memory"],[rec.length,"Recall","4 strategies per lookup"],[found,"memories found","matching facts"],[used,"sent to the AI","top evidence only"],[mm.length?"Yes":"No","Brand voice","mental model"]];
+  if(rf.length)st.push(["Yes","Reflect","deep reasoning"]);st.push(["✓","Your answer","built from these"]);
+  let n=0;const flat=[];const TERMS=terms((rec[0]||{}).query||"");
+  const groups=t.filter(s=>s.used.length).map((s,gi)=>`<details class="mm"${gi===0?" open":""}><summary>${s.op==="mental model"?"Brand voice model":s.op[0].toUpperCase()+s.op.slice(1)+": "+esc(s.query.length>70?s.query.slice(0,70)+"...":s.query)} <span class="mute">(${s.found} found)</span></summary>${(()=>{const it=s.used.map(u=>{const id=n++;flat.push(u);return `<div class="m" id="m${id}"><span class="u${usedIn(u,ans)?"":" o"}">M${id+1}</span><span>${hl2(u.length>220?u.slice(0,220)+"...":u,TERMS)}</span></div>`});return it.slice(0,3).join("")+(it.length>3?`<details class="more"><summary>Show ${it.length-3} more</summary>${it.slice(3).join("")}</details>`:"")})()}</details>`).join("");
+  const log=t.map((s,i)=>`<div class="lg"><i>${i+1}</i><span>${s.op==="recall"?`<code>recall("${esc(s.query.length>60?s.query.slice(0,60)+"...":s.query)}")</code> found ${s.found}, read the top ${s.used.length}`:s.op==="mental model"?`<code>get_mental_model("brand-voice")</code> ${s.found?"loaded the learned voice":"not ready yet"}`:`<code>reflect()</code> ran the agent loop and returned a synthesis`}</span></div>`).join("")+`<div class="lg"><i>${t.length+1}</i><span>The language model (Groq) writes the answer using only the memories above</span></div>`;
+  $("#trace").innerHTML=`<h2>How Hindsight helped</h2>${hsOps(t)}<div class="chk" id="chk"></div>${story(t,ans)}
+   <div class="mem-read"><h2>Memories the agent read</h2><div class="mute">Green figures in the answer link to the memory they came from. Click one to jump to it.</div><br>${groups}</div>`;
+  const el=document.querySelector(".ans.mem");
+  if(el){const [h,tt]=markEv(el,flat);$("#chk").textContent=tt?`Evidence check: ${h} of ${tt} figures in this answer trace to a memory Hindsight returned`:"No figures in this answer to check"}
+}
+document.addEventListener("click",e=>{const k=e.target.closest(".ev");if(!k)return;const m=document.getElementById("m"+k.dataset.m);if(!m)return;
+  let d=m.closest("details");while(d){d.open=true;d=d.parentElement&&d.parentElement.closest("details")}m.scrollIntoView({behavior:"smooth",block:"center"});m.classList.add("flash");setTimeout(()=>m.classList.remove("flash"),1800)});
+function renderBank(){
+  const B=BS[persona],who=persona,bar=(n,v,p,c)=>`<div class="br"><span>${n}</span><div class="bt"><i data-p="${p}" style="background:${c}"></i></div><b>${v}</b><span class="mute pc" data-p="${p}">0%</span></div>`;
+  const terms=(doc)=>[["Retain","saves each post as a memory",doc?doc+" documents":""],
+   ["Recall","finds memories for a question","4 strategies"],
+   ["Reflect","deep multi-step reasoning",""]];
+  const keyTerms=doc=>`<div class="gd" style="margin-top:20px">${terms(doc).map(g=>`<div class="kp"><b>${g[0]}</b><div class="mute">${esc(g[1])}</div>${g[2]?`<div class="v">${g[2]}</div>`:""}</div>`).join("")}</div>`;
+  if(B){
+    $("#p-bank").innerHTML=`<div class="bank-stats"><div class="bs"><b>${B.mem}</b><span>memories</span></div><div class="bs"><b>${B.doc}</b><span>documents</span></div><div class="bs"><b>${B.links}</b><span>links</span></div></div>
+    <div class="mmx" style="margin-top:14px"><span class="mmk">Mental model · up to date</span></div>
+    <details class="kdrop"><summary>What Observations are</summary><div class="mute" style="margin-top:6px">Patterns Hindsight noticed by combining several facts (${B.o[0]} so far).</div></details>
+    <div class="card" style="margin-top:14px"><b>Memory composition</b>${bar("World",B.w[0],B.w[1],"#0a84ff")}${bar("Experience",B.e[0],B.e[1],"#30d158")}${bar("Observations",B.o[0],B.o[1],"#bf5af2")}<br><b>Link types</b>${B.l.map(x=>bar(x[0],x[1],x[2],x[3])).join("")}</div>
+    <div class="bk"><div class="kp"><b>Consolidation</b><div class="n pc" data-p="100" style="color:var(--green)">0%</div><div class="bt big" style="margin:8px 0"><i data-p="100" style="background:var(--green)"></i></div><div class="mute">${B.done} / ${B.done} · ${B.pend} pending · ${B.fail} failed<br>Last run ${B.last}</div></div><div class="kp"><b>Mental models</b><div class="n" style="color:var(--green)">${B.mm}</div><div class="mute">up to date · 0 stale</div></div></div>
+    ${keyTerms(B.doc)}`;
+    animBank();return}
+  $("#p-bank").innerHTML=`<div class="card"><div class="mute">Loading this creator's numbers…</div></div>`;
+  fetch("/api/bank_stats?persona="+encodeURIComponent(who)).then(r=>r.json()).then(s=>{
+    if(who!==persona)return; // a different creator was picked while this was loading
+    if(!s.available){$("#p-bank").innerHTML=`<div class="card"><div class="mute">No numbers on file for this creator yet. Add "csv" to its entry in PERSONAS so this tab can compute them.</div></div>`+keyTerms();return}
+    if(s.live){
+      $("#p-bank").innerHTML=`<div class="bank-stats"><div class="bs"><b>${s.memories}</b><span>memories</span></div><div class="bs"><b>${s.documents}</b><span>documents</span></div><div class="bs"><b>${s.links}</b><span>links</span></div></div>
+      <div class="mmx" style="margin-top:14px"><span class="mmk">Mental model · brand-voice</span></div>
+      <div class="card" style="margin-top:14px"><b>Memory composition</b>${bar("World",s.world[0],s.world[1],"#0a84ff")}${bar("Experience",s.experience[0],s.experience[1],"#30d158")}${bar("Observations",s.observations[0],s.observations[1],"#bf5af2")}
+      ${s.link_rows?`<br><b>Link types</b>${s.link_rows.map(([n,v,p])=>bar(n,v,p,"#ff9f0a")).join("")}`:""}</div>
+      <div class="mute" style="padding:8px 4px 0">${s.pending||0} pending · ${s.failed||0} failed${s.last_write?" · last write "+esc(s.last_write):""}</div>
+      ${keyTerms(s.documents)}`;
+      animBank();return}
+    $("#p-bank").innerHTML=`<div class="bank-stats"><div class="bs"><b>${s.documents}</b><span>documents retained</span></div><div class="bs"><b>${s.total_posts}</b><span>posts in the dataset</span></div><div class="bs"><b>${s.facts_in_digests}</b><span>rollup facts</span></div></div>
+    <div class="mute" style="padding:0 4px 14px">Covers ${esc(s.date_from)} to ${esc(s.date_to)}. Computed from the CSV — the live Hindsight numbers weren't reachable just now.</div>
+    <div class="mmx"><span class="mmk">Mental model · brand-voice, set up automatically</span></div>
+    ${keyTerms(s.documents)}`});}
+function animBank(){
+  const root=$("#p-bank");if(!root)return;const rm=matchMedia("(prefers-reduced-motion:reduce)").matches;
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{root.querySelectorAll(".bt i[data-p]").forEach(i=>i.style.width=i.dataset.p+"%")}));
+  root.querySelectorAll(".pc[data-p]").forEach(el=>{const to=+el.dataset.p;if(rm){el.textContent=to+"%";return}
+    const t0=performance.now(),d=1800;const f=t=>{const k=Math.min(1,(t-t0)/d),e=1-Math.pow(1-k,3);el.textContent=Math.round(to*e)+"%";if(k<1)requestAnimationFrame(f)};requestAnimationFrame(f)})}
+async function run(url,body,btn,render){
+  CUR=body.question||body.topic||"";btn.disabled=true;const old=btn.textContent;btn.textContent="Working...";
+  const ST=["Recalling from the memory bank","Reading the best memories","Writing your answer"];let si=0;
+  $("#out").innerHTML='<div class="ld"><div class="wave"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div><span class="ls">'+ST[0]+'</span><span class="lh">This can take a little while</span></div></div>';$("#trace").innerHTML="";
+  const LT=setInterval(()=>{si=Math.min(si+1,ST.length-1);const e=document.querySelector(".ls");if(e)e.textContent=ST[si]},3500);
+  try{const r=await post(url,{persona,...body});
+    if(r.error)$("#out").innerHTML=box("err","Error",r.error+"\nCheck the terminal running app.py.");else render(r);
+    if(tab==="ask")trace(r.trace,r.answer||"");else $("#trace").innerHTML=""}catch(e){$("#out").innerHTML=box("err","Error",String(e))}
+  clearInterval(LT);btn.disabled=false;btn.textContent=old}
+$("#go-ask").onclick=e=>run("/api/ask",{question:$("#q").value,compare:$("#cmp").checked,deep:$("#deep").checked},e.target,r=>{
+  $("#out").innerHTML=(r.baseline?`<div class="two">${box("","Without memory",r.baseline)}${box("mem","With Hindsight memory",r.answer)}</div>`:box("mem","With Hindsight memory",r.answer))});
+function learnedBanner(items){
+  if(!Array.isArray(items)||!items.length)return "";
+  const rows=items.map(x=>`<div class="lrn-row">${x.liked?"👍":"👎"} <b>${esc(x.topic)}</b> <span class="mute">(${esc(x.format)}) — ${x.liked?"you said this worked":"you said this didn't land"}</span></div>`).join("");
+  return `<div class="lrn"><div class="lrn-head">🧠 Learned from your feedback — this plan was built with these in mind:</div>${rows}</div>`}
+function planCards(days,headline,learnedItems){
+  if(!Array.isArray(days)||!days.length)return "";
+  const cards=days.map((p,i)=>{const key="plan-"+i;RAW[key]=`${p.suggestion||p.topic||""}\n\n${(p.caption||"").replace(/\n/g,"\n")}\n\n${(p.hashtags||[]).join(" ")}`;
+    PLANS[key]={format:p.format||"",topic:p.topic||"",suggestion:p.suggestion||""};
+    return `<div class="pcard">
+      <div class="pday">${esc(p.day||"")}${p.best?'<span class="pbest">Best day</span>':""}<span class="pfmt">${esc(p.format||"")}</span></div>
+      <div class="psuggest">${esc(p.suggestion||p.topic||"")}</div>
+      <div class="pcap">${esc(p.caption||"").replace(/\n/g,"<br>")}</div>
+      <div class="ptags">${(p.hashtags||[]).map(h=>`<span class="ptag">${esc(h)}</span>`).join("")}</div>
+      <div class="prow">
+        <button class="cp" data-k="${key}">Copy</button>
+        <span class="mkrow" data-k="${key}">
+          <button class="mk" data-liked="1" data-k="${key}" title="Posted this and it worked">Posted — worked 👍</button>
+          <button class="mk" data-liked="0" data-k="${key}" title="Posted this and it didn't land">Didn't land 👎</button>
+        </span>
+      </div>
+    </div>`}).join("");
+  return `${learnedBanner(learnedItems)}<div class="plan-head">${esc(headline||"Your week, planned")}</div><div class="plan">${cards}</div>`}
+document.addEventListener("click",e=>{const b=e.target.closest(".mk");if(!b)return;
+  const key=b.dataset.k,p=PLANS[key];if(!p)return;
+  const row=b.closest(".mkrow");row.querySelectorAll(".mk").forEach(x=>x.disabled=true);
+  post("/api/mark_posted",{persona,format:p.format,topic:p.topic,suggestion:p.suggestion,liked:b.dataset.liked==="1"})
+    .then(()=>row.innerHTML='<span class="mkdone">Saved — next plan learns from this</span>')
+    .catch(()=>row.innerHTML='<span class="mkdone">Couldn\'t save — try again</span>')});
+$("#go-notes").onclick=e=>{const notes=$("#notes").value;if(!notes.trim())return;
+  run("/api/notes_plan",{notes},e.target,r=>$("#out").innerHTML=planCards(r.days,r.days.length+" post"+(r.days.length===1?"":"s")+" from your notes",r.learned_items))};
+let REPLIES=[];
+$("#go-reply").onclick=e=>{const comments=$("#comment").value;if(!comments.trim())return;
+  run("/api/reply_batch",{comments},e.target,r=>{REPLIES=r.replies||[];
+    if(!REPLIES.length){$("#out").innerHTML=box("err","Error","No comments to reply to.");return}
+    const cards=REPLIES.map((x,i)=>{const key="reply-"+i;RAW[key]=x.reply;
+      return `<div class="pcard">
+        <div class="pday">Comment ${i+1}</div>
+        <div class="pcap" style="font-style:italic">"${esc(x.comment)}"</div>
+        <div class="psuggest">${esc(x.reply)}</div>
+        <div class="prow">
+          <button class="cp" data-k="${key}">Copy</button>
+          <button class="mk" data-i="${i}">This sounds like me — save 💾</button>
+        </div>
+      </div>`}).join("");
+    $("#out").innerHTML=`<div class="plan-head">${REPLIES.length} repl${REPLIES.length===1?"y":"ies"} drafted</div><div class="plan">${cards}</div>`})};
+document.addEventListener("click",e=>{const btn=e.target.closest(".mk");
+  if(!btn||btn.dataset.i===undefined)return;
+  const item=REPLIES[+btn.dataset.i];if(!item)return;
+  btn.disabled=true;btn.textContent="Saving...";
+  post("/api/save_reply",{persona,comment:item.comment,reply:item.reply})
+    .then(()=>{btn.textContent="Saved — future replies learn from this";btn.classList.add("mkdone")})
+    .catch(()=>{btn.disabled=false;btn.textContent="Couldn't save — try again"})});
+function cal(i,build){
+  const B=BEST[persona]||BEST.chaos,max=Math.max(...B.d),top=B.d.indexOf(max);
+  if(build)$("#week").innerHTML=DAYS.map((d,j)=>`<button class="day${j===top?" top":""}" data-i="${j}"><small>${d}</small><span>${B.d[j].toFixed(2)}%</span></button>`).join("");
+  document.querySelectorAll(".day").forEach((b,j)=>{b.classList.toggle("on",j===i);b.onclick=()=>cal(j)});
+  $("#best").textContent=DAYS[i]+": "+B.d[i].toFixed(2)+"% engagement"+(i===top?" (best day)":"");
+  $("#hrs").innerHTML=Object.entries(B.h).sort((a,b)=>b[1]-a[1]).map(([h,v])=>`<div class="hr"><b>${hr(+h)}</b>${v.toFixed(2)}%</div>`).join("");
+  const sp=(max-Math.min(...B.d)).toFixed(2);
+  $("#calnote").textContent=`Green outline marks the best day. The gap between best and worst day is only ${sp} points, so treat this as a nudge, not a rule.`}
+document.querySelectorAll(".sw").forEach(s=>s.onclick=()=>s.setAttribute("aria-checked",s.getAttribute("aria-checked")!=="true"));
+</script>
+</body>
+</html>

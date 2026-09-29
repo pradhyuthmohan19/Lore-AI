@@ -1,0 +1,14 @@
+# secrets - never commit
+.env
+sheets_credentials.json
+*.pem
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# editor / tools
+.vscode/
+.opencode/
+.DS_Store
